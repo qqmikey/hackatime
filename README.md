@@ -34,23 +34,43 @@ Comment out the `LOOPS_API_KEY` for the local letter opener, otherwise the app w
 ## Build & Run the project
 
 ```sh
-$ docker compose up -d
-$ docker compose exec web /bin/bash
+$ docker compose up -d --build
 
-# Now, setup the database using:
-app# bin/rails db:create db:schema:load db:seed
+# Install dependencies into Docker volumes:
+$ docker compose exec web bundle install
+$ docker compose exec web bun install
+
+# Build SSR entrypoint (required for Procfile.dev `ssr` process):
+$ docker compose exec web bin/vite build --ssr
+
+# Setup the database:
+$ docker compose exec web bin/rails db:create db:schema:load db:seed
 
 # Now start up the app:
-app# bin/dev
+$ docker compose exec web bin/dev
 # This hosts the server on your computer w/ default port 3000
 
 # Want to do other things?
-app# bin/rails c # start an interactive irb!
-app# bin/rails db:migrate # migrate the database
-app# bin/rails rswag:specs:swaggerize # generate API documentation
+$ docker compose exec web bin/rails c # start an interactive irb!
+$ docker compose exec web bin/rails db:migrate # migrate the database
+$ docker compose exec web bin/rails rswag:specs:swaggerize # generate API documentation
 ```
 
 You can now access the app at <http://localhost:3000/>
+
+### Troubleshooting
+
+If `bin/dev` exits with `No ssr entrypoint found public/vite-ssr/ssr.js`, run:
+
+```sh
+$ docker compose exec web bin/vite build --ssr
+```
+
+If `bin/dev` exits because `watchman` is missing in the container, run without the `css` process:
+
+```sh
+$ docker compose exec web sh -c 'cd /app && PORT=3000 foreman start -f Procfile.dev -m web=1,css=0,vite=1,ssr=1'
+```
 
 Use email authentication from the homepage with `test@example.com` or create a new user (you can view outgoing emails at [http://localhost:3000/letter_opener](http://localhost:3000/letter_opener))!
 

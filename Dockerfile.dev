@@ -25,6 +25,9 @@ WORKDIR /app
 
 # Install npm dependencies for Vite
 COPY package.json bun.lock ./
+COPY vendor/inertia/packages ./vendor/inertia/packages
+
+RUN bun pm cache rm
 RUN bun install
 
 # Install application dependencies
